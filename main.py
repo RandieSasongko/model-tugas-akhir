@@ -4,6 +4,7 @@ import schedule
 import time
 import re
 import nltk
+import pymysql  # Import pymysql untuk SQLAlchemy
 from memory_profiler import memory_usage
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -14,6 +15,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from sklearn.model_selection import cross_val_score
+from threading import Thread
 
 # Download NLTK resources
 nltk.download('stopwords')
@@ -22,21 +24,14 @@ nltk.download('wordnet')
 
 # Database configuration
 DATABASE_URI = 'mysql+pymysql://root:nudgIcUzPEjPJwiBqpopSgkYSDUTsnuX@maglev.proxy.rlwy.net:14974/railway?charset=utf8mb4'
-engine = create_engine(DATABASE_URI)
-
-# Kamus sinonim atau variasi frasa
-synonym_dict = {
-    'lag': 'performa lambat',
-    'tidak mau hidup': 'tidak menyala',
-    'tidak berfungsi': 'tidak bekerja',
-    'mati mendadak': 'tiba-tiba mati',
-    'sering restart': 'sering dimulai ulang'
-}
-
-start_time = time.time()
 
 # Inisialisasi stopwords dan lemmatizer
-stop_words = stopwords.words('indonesian')
+try:
+    stop_words = stopwords.words('indonesian')
+except:
+    nltk.download('stopwords')
+    stop_words = stopwords.words('indonesian')
+
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 custom_stopwords = ['mohon', 'tolong', 'bantu', 'masalah', 'baiknya', 'berkali', 'kali', 
@@ -53,32 +48,27 @@ def clean_text(text):
 # Fungsi untuk melakukan stemming dan lemmatization
 def preprocess_text(text):
     text = clean_text(text)
-    
-    # Ganti kata atau frasa sesuai kamus sinonim
-    #for key, value in synonym_dict.items():
-    #    text = text.replace(key, value)
-    
     words = word_tokenize(text)
     words = [stemmer.stem(word) for word in words]
     words = [lemmatizer.lemmatize(word) for word in words if word not in all_stop_words]
     return ' '.join(words)
 
-# Inisialisasi variabel untuk menghitung baris
-last_row_count = 0
-
 # Fungsi untuk mengambil data dari database dan memperbarui dataframe
 def fetch_data():
-    global df, model, last_row_count
-    query_count = "SELECT COUNT(*) FROM training_data"
-    current_row_count = pd.read_sql(query_count, engine).iloc[0, 0]
-    
-    # Hanya memperbarui jika ada tambahan 100 data atau lebih
-    if current_row_count - last_row_count >= 100:
-        query = "SELECT description, component FROM training_data"
-        df = pd.read_sql(query, engine)
+    global df, model
+    try:
+        engine = create_engine(DATABASE_URI)
+        with engine.connect() as connection:
+            query = "SELECT description, component FROM training_data"
+            df = pd.read_sql(query, connection)
+        
+        if df.empty:
+            print("Database kosong, tidak ada data untuk melatih model.")
+            return
+
         df.drop_duplicates(inplace=True)
         df['description'] = df['description'].str.lower().apply(preprocess_text)
-        
+
         # Training ulang model
         print("Data dan model diperbarui dari database.")
         X = df['description']
@@ -92,27 +82,22 @@ def fetch_data():
 
         print("Accuracy for each fold:", scores)
         print(f"Mean accuracy: {scores.mean():.2f}")
-
-        # Perbarui jumlah baris terakhir
-        last_row_count = current_row_count
-
-# Jadwalkan cek setiap 10 detik
-schedule.every(10).seconds.do(fetch_data)
+    except Exception as e:
+        print(f"Error saat mengambil data dari database: {str(e)}")
 
 # Jalankan update pertama kali
 fetch_data()
 
-# End time for measuring the initial data fetch and training
-end_time = time.time()
-print("Waktu eksekusi awal:", end_time - start_time, "detik")
-
 # Fungsi prediksi
 def predict_faulty_component(description):
     description = preprocess_text(description)
-    probas = model.predict_proba([description])[0]
-    components = model.classes_
-    predictions = {components[i]: np.round(probas[i] * 100, 2) for i in range(len(components))}
-    return dict(sorted(predictions.items(), key=lambda item: item[1]))
+    try:
+        probas = model.predict_proba([description])[0]
+        components = model.classes_
+        predictions = {components[i]: np.round(probas[i] * 100, 2) for i in range(len(components))}
+        return dict(sorted(predictions.items(), key=lambda item: item[1]))
+    except Exception as e:
+        return {"error": f"Model belum siap atau error: {str(e)}"}
 
 # Buat Flask app untuk menerima request prediksi
 app = Flask(__name__)
@@ -121,20 +106,27 @@ app = Flask(__name__)
 def predict():
     try:
         data = request.get_json()
-        description = data['description']
+        description = data.get('description', '')
+        if not description:
+            return jsonify({'error': 'Deskripsi tidak boleh kosong'}), 400
+
         predictions = predict_faulty_component(description)
         return jsonify(predictions)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+# Fungsi untuk menjalankan scheduler
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(10)  # Cek setiap 10 detik
+
 # Jalankan Flask server dan scheduler
 if __name__ == '__main__':
     # Jalankan Flask di thread lain
-    from threading import Thread
-    flask_thread = Thread(target=lambda: app.run(debug=True, use_reloader=False))
+    flask_thread = Thread(target=lambda: app.run(debug=True, use_reloader=False, host="0.0.0.0"))
     flask_thread.start()
 
-    # Jalankan schedule untuk update data
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # Jalankan scheduler di thread terpisah agar tidak mengganggu Flask
+    scheduler_thread = Thread(target=run_scheduler)
+    scheduler_thread.start()
