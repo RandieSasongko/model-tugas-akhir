@@ -18,9 +18,12 @@ from sklearn.model_selection import cross_val_score
 from threading import Thread
 
 # Download NLTK resources
-nltk.download('stopwords')
-nltk.download('punkt')
-nltk.download('wordnet')
+nltk.download('stopwords', download_dir='/usr/local/nltk_data')
+nltk.download('punkt', download_dir='/usr/local/nltk_data')
+nltk.download('wordnet', download_dir='/usr/local/nltk_data')
+
+# Tambahkan lokasi data NLTK agar bisa ditemukan
+nltk.data.path.append('/usr/local/nltk_data')
 
 # Database configuration
 DATABASE_URI = 'mysql+pymysql://root:nudgIcUzPEjPJwiBqpopSgkYSDUTsnuX@maglev.proxy.rlwy.net:14974/railway?charset=utf8mb4'
