@@ -1,20 +1,21 @@
-# Gunakan base image Python
-FROM python:3.12
+# Gunakan base image yang lebih ringan
+FROM python:3.12-slim
 
-# Atur working directory di dalam container
+# Set working directory
 WORKDIR /app
 
 # Copy semua file ke dalam container
-COPY . .
+COPY . /app
 
-# Install semua dependensi
-RUN pip install --no-cache-dir -r requirements.txt
+# Buat virtual environment
+RUN python -m venv /opt/venv
 
-# Download dataset NLTK agar tidak hilang saat restart
-RUN python -m nltk.downloader -d /usr/local/nltk_data punkt stopwords wordnet
+# Aktifkan venv dan install dependencies
+RUN /opt/venv/bin/pip install --upgrade pip
+RUN /opt/venv/bin/pip install -r requirements.txt
 
-# Expose port 8080 untuk Flask
-EXPOSE 8080
+# Pastikan virtual environment digunakan di setiap run
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Jalankan aplikasi Flask dengan Gunicorn
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:8080", "app:app"]
+# Jalankan aplikasi dengan Gunicorn
+CMD ["gunicorn", "-w", "1", "-k", "gevent", "-b", "0.0.0.0:8080", "app:app"]
