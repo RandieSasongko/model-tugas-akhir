@@ -17,4 +17,4 @@ RUN python -m nltk.downloader -d /usr/local/nltk_data punkt stopwords wordnet
 EXPOSE 8080
 
 # Jalankan aplikasi Flask dengan Gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:8080", "app:app"]
