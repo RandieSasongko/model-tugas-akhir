@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import os
 import time
 import re
 import nltk
@@ -17,15 +16,13 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 from sklearn.model_selection import cross_val_score
 from threading import Thread
 
-# Tentukan path khusus untuk Railway agar tidak hilang saat restart
-nltk_data_path = "/app/nltk_data"
-os.makedirs(nltk_data_path, exist_ok=True)
-nltk.data.path.append(nltk_data_path)
+# Download NLTK resources
+nltk.download('stopwords', download_dir='/usr/local/nltk_data')
+nltk.download('punkt', download_dir='/usr/local/nltk_data')
+nltk.download('wordnet', download_dir='/usr/local/nltk_data')
 
-# Download dataset yang dibutuhkan
-nltk.download('punkt', download_dir=nltk_data_path)
-nltk.download('wordnet', download_dir=nltk_data_path)
-nltk.download('stopwords', download_dir=nltk_data_path)
+# Tambahkan lokasi data NLTK agar bisa ditemukan
+nltk.data.path.append('/usr/local/nltk_data')
 
 # Database configuration
 DATABASE_URI = 'mysql+pymysql://root:nudgIcUzPEjPJwiBqpopSgkYSDUTsnuX@maglev.proxy.rlwy.net:14974/railway?charset=utf8mb4'
@@ -120,8 +117,9 @@ def predict():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# Jalankan Flask server
+# Jalankan Flask server dan scheduler
 if __name__ == '__main__':
     # Jalankan Flask di thread lain
     flask_thread = Thread(target=lambda: app.run(debug=True, use_reloader=False, host="0.0.0.0"))
     flask_thread.start()
+
