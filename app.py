@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import schedule
 import time
 import re
 import nltk
@@ -15,12 +16,9 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 from sklearn.model_selection import cross_val_score
 
 # Download NLTK resources
-nltk.download('stopwords', download_dir='/usr/local/nltk_data')
-nltk.download('punkt', download_dir='/usr/local/nltk_data')
-nltk.download('wordnet', download_dir='/usr/local/nltk_data')
-
-# Tambahkan lokasi data NLTK agar bisa ditemukan
-nltk.data.path.append('/usr/local/nltk_data')
+nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('wordnet')
 
 # Database configuration
 DATABASE_URI = 'mysql+pymysql://root:nudgIcUzPEjPJwiBqpopSgkYSDUTsnuX@maglev.proxy.rlwy.net:14974/railway?charset=utf8mb4'
@@ -98,6 +96,9 @@ def fetch_data():
         # Perbarui jumlah baris terakhir
         last_row_count = current_row_count
 
+# Jadwalkan cek setiap 10 detik
+schedule.every(10).seconds.do(fetch_data)
+
 # Jalankan update pertama kali
 fetch_data()
 
@@ -126,9 +127,14 @@ def predict():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# Jalankan Flask server
+# Jalankan Flask server dan scheduler
 if __name__ == '__main__':
     # Jalankan Flask di thread lain
     from threading import Thread
     flask_thread = Thread(target=lambda: app.run(debug=True, use_reloader=False))
     flask_thread.start()
+
+    # Jalankan schedule untuk update data
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
