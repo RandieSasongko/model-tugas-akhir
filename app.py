@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import schedule
 import time
 import re
 import nltk
@@ -99,9 +98,6 @@ def fetch_data():
         # Perbarui jumlah baris terakhir
         last_row_count = current_row_count
 
-# Jadwalkan cek setiap 10 detik
-schedule.every(10).seconds.do(fetch_data)
-
 # Jalankan update pertama kali
 fetch_data()
 
@@ -130,14 +126,9 @@ def predict():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# Jalankan Flask server dan scheduler
+# Jalankan Flask server 
 if __name__ == '__main__':
     # Jalankan Flask di thread lain
     from threading import Thread
     flask_thread = Thread(target=lambda: app.run(debug=True, use_reloader=False))
     flask_thread.start()
-
-    # Jalankan schedule untuk update data
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
