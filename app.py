@@ -14,13 +14,13 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from sklearn.model_selection import cross_val_score
 
-# Download NLTK resources
-nltk.download('stopwords', download_dir='/usr/local/nltk_data')
-nltk.download('punkt', download_dir='/usr/local/nltk_data')
-nltk.download('wordnet', download_dir='/usr/local/nltk_data')
+# Jangan gunakan /usr/local/nltk_data, gunakan /app/nltk_data
+nltk.download('stopwords', download_dir='/app/nltk_data')
+nltk.download('punkt', download_dir='/app/nltk_data')
+nltk.download('wordnet', download_dir='/app/nltk_data')
 
-# Tambahkan lokasi data NLTK agar bisa ditemukan
-nltk.data.path.append('/usr/local/nltk_data')
+# Pastikan lokasi ini dikenali NLTK
+nltk.data.path.append('/app/nltk_data')
 
 # Database configuration
 DATABASE_URI = 'mysql+pymysql://root:nudgIcUzPEjPJwiBqpopSgkYSDUTsnuX@maglev.proxy.rlwy.net:14974/railway?charset=utf8mb4'
@@ -128,7 +128,5 @@ def predict():
 
 # Jalankan Flask server 
 if __name__ == '__main__':
-    # Jalankan Flask di thread lain
-    from threading import Thread
-    flask_thread = Thread(target=lambda: app.run(debug=True, use_reloader=False))
-    flask_thread.start()
+    port = int(os.environ.get("PORT", 5000))  # Gunakan PORT dari Railway, default ke 5000 jika tidak ada
+    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
