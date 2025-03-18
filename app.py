@@ -3,6 +3,7 @@ import numpy as np
 import time
 import re
 import nltk
+import os
 from memory_profiler import memory_usage
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
