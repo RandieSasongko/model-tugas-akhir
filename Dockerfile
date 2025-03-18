@@ -1,19 +1,18 @@
-FROM python:3.10-slim
+# Gunakan base image yang lebih ringan
+FROM python:3.12-slim
 
+# Set working directory
 WORKDIR /app
 
-# Install Rust & Cargo
-RUN apt update && apt install -y curl && \
-    curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-    . "$HOME/.cargo/env"
+# Copy semua file ke dalam container
+COPY . /app
 
-COPY requirements.txt .
+# Buat virtual environment
+RUN python -m venv /opt/venv
 
-RUN python -m venv /opt/venv && \
-    . /opt/venv/bin/activate && \
-    pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Aktifkan venv dan install dependencies
+RUN /opt/venv/bin/pip install --upgrade pip
+RUN /opt/venv/bin/pip install -r requirements.txt
 
-COPY . .
-
-CMD ["bash"]
+# Pastikan virtual environment digunakan di setiap run
+ENV PATH="/opt/venv/bin:$PATH"
