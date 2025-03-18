@@ -18,6 +18,7 @@ from sklearn.model_selection import cross_val_score
 nltk.download('stopwords', download_dir='/usr/local/nltk_data')
 nltk.download('punkt', download_dir='/usr/local/nltk_data')
 nltk.download('wordnet', download_dir='/usr/local/nltk_data')
+nltk.download('punkt_tab', download_dir='/usr/local/nltk_data')
 
 # Tambahkan lokasi data NLTK agar bisa ditemukan
 nltk.data.path.append('/usr/local/nltk_data')
