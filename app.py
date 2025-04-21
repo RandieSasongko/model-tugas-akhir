@@ -14,7 +14,6 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 
 # Download NLTK resources
 nltk.download('stopwords', download_dir='/usr/local/nltk_data')
