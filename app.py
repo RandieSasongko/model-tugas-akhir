@@ -13,7 +13,8 @@ from flask import Flask, request, jsonify
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 
 # Download NLTK resources
 nltk.download('stopwords', download_dir='/usr/local/nltk_data')
@@ -25,17 +26,8 @@ nltk.download('punkt_tab', download_dir='/usr/local/nltk_data')
 nltk.data.path.append('/usr/local/nltk_data')
 
 # Database configuration
-DATABASE_URI = 'mysql+pymysql://root:nudgIcUzPEjPJwiBqpopSgkYSDUTsnuX@maglev.proxy.rlwy.net:14974/railway?charset=utf8mb4'
+DATABASE_URI = 'mysql+pymysql://root:@localhost/compere_tugasakhir'
 engine = create_engine(DATABASE_URI)
-
-# Kamus sinonim atau variasi frasa
-synonym_dict = {
-    'lag': 'performa lambat',
-    'tidak mau hidup': 'tidak menyala',
-    'tidak berfungsi': 'tidak bekerja',
-    'mati mendadak': 'tiba-tiba mati',
-    'sering restart': 'sering dimulai ulang'
-}
 
 start_time = time.time()
 
@@ -58,10 +50,6 @@ def clean_text(text):
 def preprocess_text(text):
     text = clean_text(text)
     
-    # Ganti kata atau frasa sesuai kamus sinonim
-    #for key, value in synonym_dict.items():
-    #    text = text.replace(key, value)
-    
     words = word_tokenize(text)
     words = [stemmer.stem(word) for word in words]
     words = [lemmatizer.lemmatize(word) for word in words if word not in all_stop_words]
@@ -70,38 +58,50 @@ def preprocess_text(text):
 # Inisialisasi variabel untuk menghitung baris
 last_row_count = 0
 
-# Fungsi untuk mengambil data dari database dan memperbarui dataframe
-def fetch_data():
-    global df, model, last_row_count
-    query_count = "SELECT COUNT(*) FROM training_data"
-    current_row_count = pd.read_sql(query_count, engine).iloc[0, 0]
+# Fetch dan latih data
+def fetch_and_train_model():
+    global model, last_row_count
+    query = "SELECT description, component FROM training_data"
+    df = pd.read_sql(query, engine)
+    df.drop_duplicates(inplace=True)
+    df['description'] = df['description'].str.lower().apply(preprocess_text)
     
-    # Hanya memperbarui jika ada tambahan 100 data atau lebih
-    if current_row_count - last_row_count >= 100:
-        query = "SELECT description, component FROM training_data"
-        df = pd.read_sql(query, engine)
-        df.drop_duplicates(inplace=True)
-        df['description'] = df['description'].str.lower().apply(preprocess_text)
-        
-        # Training ulang model
-        print("Data dan model diperbarui dari database.")
-        X = df['description']
-        y = df['component']
-        tfidf = TfidfVectorizer(stop_words=all_stop_words)
-        model = make_pipeline(tfidf, MultinomialNB(alpha=1.0))
-        model.fit(X, y)
+    X = df['description']
+    y = df['component']
 
-        # Perform 5-fold cross-validation
-        scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
+    # Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-        print("Accuracy for each fold:", scores)
-        print(f"Mean accuracy: {scores.mean():.2f}")
+    # Pipeline dan cross-validation
+    model = make_pipeline(TfidfVectorizer(stop_words=all_stop_words), MultinomialNB(alpha=1.0))
 
-        # Perbarui jumlah baris terakhir
-        last_row_count = current_row_count
+    cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
+    print("Cross-validation scores:", cv_scores)
+    print("Mean CV accuracy:", cv_scores.mean())
+
+    # Train final model
+    model.fit(X_train, y_train)
+
+    # Evaluate on test set
+    test_accuracy = model.score(X_test, y_test)
+    print("Test accuracy:", test_accuracy)
+
+    # Confusion Matrix
+    y_pred = model.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+    print("Confusion Matrix:")
+    print(cm)
+    
+    # Display Confusion Matrix
+    cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
+    cm_display.plot(cmap='Blues')
+
+    # Classification Report
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
 
 # Jalankan update pertama kali
-fetch_data()
+fetch_and_train_model()
 
 # End time for measuring the initial data fetch and training
 end_time = time.time()
