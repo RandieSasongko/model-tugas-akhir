@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import nltk
 import re
 import os
 import joblib
@@ -26,8 +27,7 @@ download_nltk_data()
 DATABASE_URI = 'mysql+pymysql://root:GcchhrdqnsKyauycgVpnYKpXMzYSELhn@ballast.proxy.rlwy.net:58414/railway?charset=utf8mb4'
 engine = create_engine(DATABASE_URI)
 
-# NLTK preparation
-import nltk
+# NLTK preparatio
 nltk.data.path.append('/usr/local/nltk_data')
 stop_words = stopwords.words('indonesian')
 stemmer = PorterStemmer()
