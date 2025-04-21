@@ -87,18 +87,18 @@ def fetch_and_train_model():
     print("Test accuracy:", test_accuracy)
 
     # Confusion Matrix
-    y_pred = model.predict(X_test)
-    cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
-    print("Confusion Matrix:")
-    print(cm)
+    # y_pred = model.predict(X_test)
+    # cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+    # print("Confusion Matrix:")
+    # print(cm)
     
     # Display Confusion Matrix
-    cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
-    cm_display.plot(cmap='Blues')
+    # cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
+    # cm_display.plot(cmap='Blues')
 
     # Classification Report
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
+    # print("\nClassification Report:")
+    # print(classification_report(y_test, y_pred))
 
 # Jalankan update pertama kali
 fetch_and_train_model()
