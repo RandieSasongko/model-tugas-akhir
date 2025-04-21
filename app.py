@@ -16,10 +16,8 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 from sklearn.model_selection import train_test_split, cross_val_score
 
 # Setup NLTK
-nltk.download('stopwords', download_dir='/usr/local/nltk_data')
-nltk.download('punkt', download_dir='/usr/local/nltk_data')
-nltk.download('wordnet', download_dir='/usr/local/nltk_data')
-nltk.data.path.append('/usr/local/nltk_data')
+nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
+nltk.data.path.append(nltk_data_path)
 
 # Config
 DATABASE_URI = 'mysql+pymysql://root:GcchhrdqnsKyauycgVpnYKpXMzYSELhn@ballast.proxy.rlwy.net:58414/railway?charset=utf8mb4'
