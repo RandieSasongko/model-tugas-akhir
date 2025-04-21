@@ -74,9 +74,9 @@ def fetch_and_train_model():
     # Pipeline dan cross-validation
     model = make_pipeline(TfidfVectorizer(stop_words=all_stop_words), MultinomialNB(alpha=1.0))
 
-    cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
-    print("Cross-validation scores:", cv_scores)
-    print("Mean CV accuracy:", cv_scores.mean())
+    # cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
+    # print("Cross-validation scores:", cv_scores)
+    # print("Mean CV accuracy:", cv_scores.mean())
 
     # Train final model
     model.fit(X_train, y_train)
