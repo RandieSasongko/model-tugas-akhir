@@ -13,6 +13,7 @@ RUN python -m venv /opt/venv
 # Aktifkan venv dan install dependencies
 RUN /opt/venv/bin/pip install --upgrade pip
 RUN /opt/venv/bin/pip install -r requirements.txt
+RUN python /app/prepare_nltk.py
 
 # Pastikan virtual environment digunakan di setiap run
 ENV PATH="/opt/venv/bin:$PATH"
