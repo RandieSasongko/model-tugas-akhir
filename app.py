@@ -8,7 +8,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
-print("🚀 App booting...")
+print("📦 App.py started")
 # Pakai path lokal nltk_data
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NLTK_DATA_PATH = os.path.join(BASE_DIR, 'nltk_data')
