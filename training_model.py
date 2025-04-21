@@ -13,16 +13,20 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
-# --------------------------------------------
-# Unduh data NLTK jika belum tersedia
+# === Setup NLTK data path ===
+NLTK_DATA_PATH = os.path.join(os.path.dirname(__file__), 'nltk_data')
+nltk.data.path.append(NLTK_DATA_PATH)
+
+# === Download NLTK data if not already available ===
 def download_nltk_data():
-    for resource in ['stopwords', 'punkt', 'wordnet']:
+    for resource in ['stopwords', 'punkt']:
         try:
             nltk.data.find(f'corpora/{resource}')
         except LookupError:
-            nltk.download(resource)
+            nltk.download(resource, download_dir=NLTK_DATA_PATH)
+
 download_nltk_data()
-# --------------------------------------------
+
 # Database connection
 DATABASE_URI = 'mysql+pymysql://root:GcchhrdqnsKyauycgVpnYKpXMzYSELhn@ballast.proxy.rlwy.net:58414/railway?charset=utf8mb4'
 engine = create_engine(DATABASE_URI)
