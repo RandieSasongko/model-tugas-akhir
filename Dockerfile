@@ -17,4 +17,4 @@ RUN /opt/venv/bin/pip install -r requirements.txt
 # Pastikan virtual environment digunakan di setiap run
 ENV PATH="/opt/venv/bin:$PATH"
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["/opt/venv/bin/python", "app.py"]
