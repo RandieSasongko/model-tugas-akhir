@@ -18,6 +18,8 @@ from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 # Download NLTK resources
 nltk.download('stopwords', download_dir='/usr/local/nltk_data')
 nltk.download('punkt', download_dir='/usr/local/nltk_data')
+nltk.download('wordnet', download_dir='/usr/local/nltk_data')
+nltk.download('punkt_tab', download_dir='/usr/local/nltk_data')
 
 # Tambahkan lokasi data NLTK agar bisa ditemukan
 nltk.data.path.append('/usr/local/nltk_data')
@@ -25,6 +27,15 @@ nltk.data.path.append('/usr/local/nltk_data')
 # Database configuration
 DATABASE_URI = 'mysql+pymysql://root:GcchhrdqnsKyauycgVpnYKpXMzYSELhn@ballast.proxy.rlwy.net:58414/railway?charset=utf8mb4'
 engine = create_engine(DATABASE_URI)
+
+# Kamus sinonim atau variasi frasa
+synonym_dict = {
+    'lag': 'performa lambat',
+    'tidak mau hidup': 'tidak menyala',
+    'tidak berfungsi': 'tidak bekerja',
+    'mati mendadak': 'tiba-tiba mati',
+    'sering restart': 'sering dimulai ulang'
+}
 
 start_time = time.time()
 
@@ -39,21 +50,28 @@ stemmer = factory.create_stemmer()
 
 # Fungsi untuk membersihkan teks
 def clean_text(text):
-    text = text.lower()  # lowercase semua
-    text = re.sub(r'\d+', '', text)  # hapus angka
-    text = re.sub(r'\s+', ' ', text)  # hapus spasi berlebih
-    text = re.sub(r'[^\w\s]', '', text)  # hapus tanda baca
+    text = text.lower()
+    text = re.sub(r'\d+', '', text)
+    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'[^\w\s]', '', text)
     return text.strip()
 
-# Fungsi untuk preprocess (bersihkan, ganti sinonim, stopwords, stemming)
+# Fungsi untuk mengganti sinonim secara aman dengan regex
+def replace_synonyms(text, synonym_dict):
+    for key, value in synonym_dict.items():
+        pattern = r'\b' + re.escape(key) + r'\b'
+        text = re.sub(pattern, value, text, flags=re.IGNORECASE)
+    return text
+
+# Fungsi untuk preprocess teks
 def preprocess_text(text):
     text = clean_text(text)
+    text = replace_synonyms(text, synonym_dict)
 
-    words = word_tokenize(text)  # tokenisasi
-    words = [word for word in words if word not in all_stop_words]  # hapus stopwords
+    words = word_tokenize(text)
+    words = [word for word in words if word not in all_stop_words]
     text = ' '.join(words)
 
-    # Stemming dengan Sastrawi
     stemmed_text = stemmer.stem(text)
     return stemmed_text
 
@@ -72,7 +90,7 @@ def fetch_data():
         df = pd.read_sql(query, engine)
         df.drop_duplicates(inplace=True)
         df['description'] = df['description'].apply(preprocess_text)
-        
+
         # Training ulang model
         print("Data dan model diperbarui dari database.")
         X = df['description']
@@ -95,7 +113,7 @@ fetch_data()
 end_time = time.time()
 print("Waktu eksekusi awal:", end_time - start_time, "detik")
 
-# Fungsi prediksi
+# Fungsi prediksi komponen
 def predict_faulty_component(description):
     description = preprocess_text(description)
     probas = model.predict_proba([description])[0]
@@ -103,7 +121,7 @@ def predict_faulty_component(description):
     predictions = {components[i]: np.round(probas[i] * 100, 2) for i in range(len(components))}
     return dict(sorted(predictions.items(), key=lambda item: item[1]))
 
-# Buat Flask app
+# Setup Flask API
 app = Flask(__name__)
 
 @app.route('/predict', methods=['POST'])
@@ -118,5 +136,5 @@ def predict():
 
 # Jalankan server Flask
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # Railway PORT env
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
