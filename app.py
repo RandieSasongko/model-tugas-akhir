@@ -25,7 +25,7 @@ nltk.download('punkt_tab', download_dir='/usr/local/nltk_data')
 nltk.data.path.append('/usr/local/nltk_data')
 
 # Database configuration
-DATABASE_URI = 'mysql+pymysql://root:nudgIcUzPEjPJwiBqpopSgkYSDUTsnuX@maglev.proxy.rlwy.net:14974/railway?charset=utf8mb4'
+DATABASE_URI = 'mysql+pymysql://root:GcchhrdqnsKyauycgVpnYKpXMzYSELhn@ballast.proxy.rlwy.net:58414/railway?charset=utf8mb4'
 engine = create_engine(DATABASE_URI)
 
 # Kamus sinonim atau variasi frasa
