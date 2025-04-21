@@ -8,18 +8,18 @@ from memory_profiler import memory_usage
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
-from sqlalchemy import create_engine
+from sklearn.model_selection import train_test_split, cross_val_score
 from flask import Flask, request, jsonify
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
-from sklearn.model_selection import train_test_split, cross_val_score
+from sqlalchemy import create_engine
+import joblib
 
 # Download NLTK resources
 nltk.download('stopwords', download_dir='/nltk_data')
 nltk.download('punkt', download_dir='/nltk_data')
 nltk.download('wordnet', download_dir='/nltk_data')
-nltk.download('punkt_tab', download_dir='/nltk_data')
 
 # Tambahkan lokasi data NLTK agar bisa ditemukan
 nltk.data.path.append('/nltk_data')
@@ -57,7 +57,7 @@ def preprocess_text(text):
 # Inisialisasi variabel untuk menghitung baris
 last_row_count = 0
 
-# Fetch dan latih data
+# Fungsi untuk fetch dan latih model
 def fetch_and_train_model():
     global model, last_row_count
     query = "SELECT description, component FROM training_data"
@@ -85,24 +85,21 @@ def fetch_and_train_model():
     test_accuracy = model.score(X_test, y_test)
     print("Test accuracy:", test_accuracy)
 
-    # Confusion Matrix
-    # y_pred = model.predict(X_test)
-    # cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
-    # print("Confusion Matrix:")
-    # print(cm)
-    
-    # Display Confusion Matrix
-    # cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
-    # cm_display.plot(cmap='Blues')
+    # Simpan model ke disk
+    joblib.dump(model, 'model.pkl')
 
-    # Classification Report
-    # print("\nClassification Report:")
-    # print(classification_report(y_test, y_pred))
+# Cek apakah model sudah ada di disk
+def load_model():
+    if os.path.exists('model.pkl'):
+        return joblib.load('model.pkl')
+    else:
+        fetch_and_train_model()
+        return joblib.load('model.pkl')
 
-# Jalankan update pertama kali
-fetch_and_train_model()
+# Load model saat aplikasi pertama kali berjalan
+model = load_model()
 
-# End time for measuring the initial data fetch and training
+# End time untuk mengukur waktu eksekusi awal
 end_time = time.time()
 print("Waktu eksekusi awal:", end_time - start_time, "detik")
 
