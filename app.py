@@ -8,9 +8,11 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
+print("🚀 App booting...")
 # Pakai path lokal nltk_data
-nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
-nltk.data.path.append(nltk_data_path)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+NLTK_DATA_PATH = os.path.join(BASE_DIR, 'nltk_data')
+nltk.data.path.append(NLTK_DATA_PATH)
 
 # Inisialisasi NLP tools
 stop_words = stopwords.words('indonesian')
