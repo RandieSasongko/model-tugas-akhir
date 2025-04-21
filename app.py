@@ -87,15 +87,21 @@ def fetch_data():
         print("Data dan model diperbarui dari database.")
         X = df['description']
         y = df['component']
+
+        # Split 70% training, 30% testing
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
         tfidf = TfidfVectorizer(stop_words=all_stop_words)
         model = make_pipeline(tfidf, MultinomialNB(alpha=1.0))
-        model.fit(X, y)
+
+        # Training model
+        model.fit(X_train, y_train)
 
         # Perform 5-fold cross-validation
-        scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
+        # scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
 
-        print("Accuracy for each fold:", scores)
-        print(f"Mean accuracy: {scores.mean():.2f}")
+        # print("Accuracy for each fold:", scores)
+        # print(f"Mean accuracy: {scores.mean():.2f}")
 
         # Perbarui jumlah baris terakhir
         last_row_count = current_row_count
