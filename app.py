@@ -15,25 +15,10 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from sklearn.model_selection import train_test_split, cross_val_score
 
-nltk_data_path = '/usr/local/nltk_data'
-
-def safe_download(resource_name):
-    try:
-        # Coba temukan resource
-        find(f"{resource_name}")
-        print(f"Resource '{resource_name}' sudah tersedia.")
-    except LookupError:
-        try:
-            nltk.download(resource_name, download_dir=nltk_data_path)
-            print(f"Resource '{resource_name}' berhasil diunduh.")
-        except Exception as e:
-            print(f"Gagal mengunduh '{resource_name}': {e}")
-
-# Daftar resource yang ingin diunduh
-resources = ['stopwords', 'punkt', 'wordnet']
-
-for res in resources:
-    safe_download(res)
+# Download NLTK resources
+nltk.download('stopwords', download_dir='/usr/local/nltk_data')
+nltk.download('punkt', download_dir='/usr/local/nltk_data')
+nltk.download('wordnet', download_dir='/usr/local/nltk_data')
 
 # Tambahkan lokasi data NLTK agar bisa ditemukan
 nltk.data.path.append('/usr/local/nltk_data')
